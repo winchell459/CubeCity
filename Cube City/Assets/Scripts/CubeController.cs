@@ -26,7 +26,7 @@ public class CubeController : MonoBehaviour
         pivotTransforms = new Transform[] { pypx, pymx, mypx, mymx, pypz, pymz, mypz, mymz, pxpz, pxmz, mxpz, mxmz };
         rb = GetComponent<Rigidbody>();
         //pivot = new Vector3(transform.position.x + 0.5f, transform.position.y - 0.5f, transform.position.z);
-        setPivot(-Vector3.forward);
+        setPivot(Vector3.forward);
     }
 
     // Update is called once per frame
@@ -35,6 +35,10 @@ public class CubeController : MonoBehaviour
         float h = Input.GetAxis("Horizontal") * AngularForce * Time.deltaTime;
         float v = Input.GetAxis("Vertical") * AngularForce * Time.deltaTime;
 
+        if (v > 0 && checkSides()) setPivot(Vector3.forward);
+        else if (v < 0 && checkSides()) setPivot(-Vector3.forward);
+        else if (h > 0 && checkSides()) setPivot(Vector3.right);
+        else if (h < 0 && checkSides()) setPivot(-Vector3.right);
 
         if (moving == Vector3.forward || moving == -Vector3.forward)
             transform.RotateAround(pivot.position, Vector3.right, v);
@@ -45,7 +49,24 @@ public class CubeController : MonoBehaviour
         //Debug.Log(transform.localPosition.x);
     }
 
+    bool checkSides()
+    {
+        return !(sideRaycast(backwardSide) > 0.01f && sideRaycast(forwardSide) > 0.01f);
+    }
+    float sideRaycast(Transform sideT)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(sideT.position, sideT.forward, out hit, 10f))
+        {
+            Debug.Log(sideT.name + " " + hit.distance);
+            return hit.distance;
+        }
+
+        return Mathf.Infinity;
+    }
+
     void setPivot(Vector3 movingDirection){
+        //if (moving == movingDirection) return;
         moving = movingDirection;
         Vector3 position = transform.position;
         if(movingDirection == Vector3.right){
@@ -92,10 +113,10 @@ public class CubeController : MonoBehaviour
     void setSides()
     {
         Vector3 pos = transform.position + moving*halfWidth;
-        Debug.Log(pos);
+        //Debug.Log(pos);
         foreach(Transform sideT in sideTransforms)
         {
-            Debug.Log(sideT.position);
+            //Debug.Log(sideT.position);
             if (Vector3.Distance(sideT.position, pos) < 0.1)
             {
                 forwardSide = sideT;
